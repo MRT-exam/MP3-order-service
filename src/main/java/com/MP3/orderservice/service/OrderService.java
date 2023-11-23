@@ -54,10 +54,10 @@ public class OrderService {
         InventoryRequest inventoryRequest = new InventoryRequest();
 
         // Add Product Names and Quantities to the inventoryRequest
-        Iterator<String> iKey = productNames.iterator();
-        Iterator<Integer> iVal = productQuantities.iterator();
-        while (iKey.hasNext() && iVal.hasNext()) {
-            inventoryRequest.getProductAndQuantity().put(iKey.next(), iVal.next());
+        Iterator<String> iProductNames = productNames.iterator();
+        Iterator<Integer> iProductQuantities = productQuantities.iterator();
+        while (iProductNames.hasNext() && iProductQuantities.hasNext()) {
+            inventoryRequest.getProductAndQuantity().put(iProductNames.next(), iProductQuantities.next());
         }
 
         // Call the Inventory Service to check if the products are in stock
