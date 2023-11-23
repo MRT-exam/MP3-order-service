@@ -1,6 +1,5 @@
 package com.MP3.orderservice.service;
 
-import com.MP3.orderservice.dto.InventoryRequest;
 import com.MP3.orderservice.dto.InventoryResponse;
 import com.MP3.orderservice.dto.OrderLineDto;
 import com.MP3.orderservice.dto.OrderRequest;
@@ -11,12 +10,14 @@ import com.MP3.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -30,51 +31,54 @@ public class OrderService {
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
 
+        // Get stream of orderLineDtos from OrderRequest
+        Stream<OrderLineDto> orderLineDtosStream = orderRequest.getOrderLineDtos().stream();
+
         // Map orderLineDtos to orderLines and add to the order model
-        List<OrderLine> orderLines = orderRequest.getOrderLineDtos()
-                .stream()
+        List<OrderLine> orderLines = orderLineDtosStream
                 .map(this:: mapFromDto)
                 .toList();
         order.setOrderLines(orderLines);
 
-        // Retrieve productNames from orderRequest
-        List<String> productNames = orderRequest.getOrderLineDtos()
-                .stream()
+        // Retrieve productNames
+        List<String> productNames = orderLineDtosStream
                 .map(OrderLineDto::getProductName)
                 .toList();
 
-        // Retrieve quantities of the orderlines/products
-        List<Integer> productQuantities = orderRequest.getOrderLineDtos()
-                .stream()
+        // Retrieve quantity in each orderLine
+        List<Integer> orderLineQuantityList = orderLineDtosStream
                 .map(OrderLineDto::getQuantity)
                 .toList();
 
         // (Synchronous communication)
-        // Create InventoryRequest
-        InventoryRequest inventoryRequest = new InventoryRequest();
-
-        // Add Product Names and Quantities to the inventoryRequest
-        Iterator<String> iProductNames = productNames.iterator();
-        Iterator<Integer> iProductQuantities = productQuantities.iterator();
-        while (iProductNames.hasNext() && iProductQuantities.hasNext()) {
-            inventoryRequest.getProductAndQuantity().put(iProductNames.next(), iProductQuantities.next());
-        }
-
-        // Call the Inventory Service to check if the products are in stock
-        // Inventory Service verifies if the quantity requested is in stock
+        // Get inventoryResponses for each orderLine
         InventoryResponse[] inventoryResponseArray = webClient.get()
-                .uri("http://localhost:8082/api/inventory",
-                        uriBuilder -> uriBuilder.queryParam("inventoryRequest", inventoryRequest).build())
+                .uri("http://localhost:8082/api/inventory/",
+                        uriBuilder -> uriBuilder.queryParam("productNames", productNames).build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
                 .block();
 
-        // If all requested products are in stock, then save the new order in the DB
-        boolean allProductsInStock = Arrays.stream(inventoryResponseArray)
-                .allMatch(InventoryResponse::isInStock);
+        // Retrieve quantityInStock for each product
+        List<Integer> inventoryQuantityInStockList = Arrays.stream(inventoryResponseArray)
+                .map(InventoryResponse::getQuantityInStock)
+                .toList();
+
+        // Check if all products are in stock
+        boolean allProductsInStock = true;
+        for (int i=0; i < inventoryQuantityInStockList.size(); i++) {
+            if (inventoryQuantityInStockList.get(i) - orderLineQuantityList.get(i) >= 0) {
+                continue;
+            } else {
+                allProductsInStock = false;
+            }
+        }
+        // If all products are in stock then place order and send kafka events
         if (allProductsInStock) {
             orderRepository.save(order);
             kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
+            // Also notify the Inventory Service that the quantities ordered
+            // should be subtracted from the quantitiesInStock
         } else {
             throw new IllegalArgumentException("Product is not in stock");
         }
@@ -87,5 +91,4 @@ public class OrderService {
         orderLine.setProductName(orderLine.getProductName());
         return orderLine;
     }
-
 }
