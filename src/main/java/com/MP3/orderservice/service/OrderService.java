@@ -37,19 +37,21 @@ public class OrderService {
                 .toList();
         order.setOrderLines(orderLines);
 
-        List<String> productNames = order.getOrderLines()
+        // Retrieve productNames from orderRequest
+        List<String> productNames = orderRequest.getOrderLineDtos()
                 .stream()
-                .map(OrderLine::getProductName)
+                .map(OrderLineDto::getProductName)
                 .toList();
 
-        // (Synchronous communication)
-        // Create InventoryRequest
-        InventoryRequest inventoryRequest = new InventoryRequest();
         // Retrieve quantities of the orderlines/products
         List<Integer> productQuantities = orderRequest.getOrderLineDtos()
                 .stream()
                 .map(OrderLineDto::getQuantity)
                 .toList();
+
+        // (Synchronous communication)
+        // Create InventoryRequest
+        InventoryRequest inventoryRequest = new InventoryRequest();
 
         // Add Product Names and Quantities to the inventoryRequest
         Iterator<String> iKey = productNames.iterator();
@@ -58,7 +60,8 @@ public class OrderService {
             inventoryRequest.getProductAndQuantity().put(iKey.next(), iVal.next());
         }
 
-        // Call the Inventory Service to check if product is in stock
+        // Call the Inventory Service to check if the products are in stock
+        // Inventory Service verifies if the quantity requested is in stock
         InventoryResponse[] inventoryResponseArray = webClient.get()
                 .uri("http://localhost:8082/api/inventory",
                         uriBuilder -> uriBuilder.queryParam("inventoryRequest", inventoryRequest).build())
@@ -66,7 +69,7 @@ public class OrderService {
                 .bodyToMono(InventoryResponse[].class)
                 .block();
 
-        // Save the new order in the DB
+        // If all requested products are in stock, then save the new order in the DB
         boolean allProductsInStock = Arrays.stream(inventoryResponseArray)
                 .allMatch(InventoryResponse::isInStock);
         if (allProductsInStock) {
