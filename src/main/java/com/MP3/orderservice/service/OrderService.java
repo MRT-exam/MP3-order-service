@@ -33,10 +33,16 @@ public class OrderService {
                 .toList();
         order.setOrderLines(orderLines);
 
+        List<String> productNames = order.getOrderLines()
+                .stream()
+                .map(OrderLine::getProductName)
+                .toList();
+
         // (Synchronous communication)
         // Call the Inventory Service to check if product is in stock
         Boolean inStock = webClient.get()
-                .uri("http://localhost:8082/api/inventory")
+                .uri("http://localhost:8082/api/inventory",
+                        uriBuilder -> uriBuilder.queryParam("productName", productNames).build())
                 .retrieve()
                 .bodyToMono(Boolean.class)
                 .block();
