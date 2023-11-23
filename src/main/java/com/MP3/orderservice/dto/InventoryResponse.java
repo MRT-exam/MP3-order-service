@@ -1,14 +1,15 @@
 package com.MP3.orderservice.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderRequest {
-    private List<OrderLineDto> orderLineDtos;
+@Builder
+public class InventoryResponse {
+    private String productName;
+    private boolean isInStock;
 }

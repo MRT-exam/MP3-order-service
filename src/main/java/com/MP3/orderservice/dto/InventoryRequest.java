@@ -1,14 +1,17 @@
 package com.MP3.orderservice.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderRequest {
-    private List<OrderLineDto> orderLineDtos;
+public class InventoryRequest {
+    private Map<String, Integer> productAndQuantity;
 }
+

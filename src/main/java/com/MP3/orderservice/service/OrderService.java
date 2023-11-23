@@ -1,5 +1,7 @@
 package com.MP3.orderservice.service;
 
+import com.MP3.orderservice.dto.InventoryRequest;
+import com.MP3.orderservice.dto.InventoryResponse;
 import com.MP3.orderservice.dto.OrderLineDto;
 import com.MP3.orderservice.dto.OrderRequest;
 import com.MP3.orderservice.event.OrderPlacedEvent;
@@ -11,6 +13,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,16 +43,33 @@ public class OrderService {
                 .toList();
 
         // (Synchronous communication)
+        // Create InventoryRequest
+        InventoryRequest inventoryRequest = new InventoryRequest();
+        // Retrieve quantities of the orderlines/products
+        List<Integer> productQuantities = orderRequest.getOrderLineDtos()
+                .stream()
+                .map(OrderLineDto::getQuantity)
+                .toList();
+
+        // Add Product Names and Quantities to the inventoryRequest
+        Iterator<String> iKey = productNames.iterator();
+        Iterator<Integer> iVal = productQuantities.iterator();
+        while (iKey.hasNext() && iVal.hasNext()) {
+            inventoryRequest.getProductAndQuantity().put(iKey.next(), iVal.next());
+        }
+
         // Call the Inventory Service to check if product is in stock
-        Boolean inStock = webClient.get()
+        InventoryResponse[] inventoryResponseArray = webClient.get()
                 .uri("http://localhost:8082/api/inventory",
-                        uriBuilder -> uriBuilder.queryParam("productName", productNames).build())
+                        uriBuilder -> uriBuilder.queryParam("inventoryRequest", inventoryRequest).build())
                 .retrieve()
-                .bodyToMono(Boolean.class)
+                .bodyToMono(InventoryResponse[].class)
                 .block();
 
         // Save the new order in the DB
-        if (inStock) {
+        boolean allProductsInStock = Arrays.stream(inventoryResponseArray)
+                .allMatch(InventoryResponse::isInStock);
+        if (allProductsInStock) {
             orderRepository.save(order);
             kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
         } else {
