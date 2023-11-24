@@ -34,12 +34,6 @@ public class OrderService {
         // Get stream of orderLineDtos from OrderRequest
         Stream<OrderLineDto> orderLineDtosStream = orderRequest.getOrderLineDtos().stream();
 
-        // Map orderLineDtos to orderLines and add to the order model
-        List<OrderLine> orderLines = orderLineDtosStream
-                .map(this:: mapFromDto)
-                .toList();
-        order.setOrderLines(orderLines);
-
         // Retrieve productNames
         List<String> productNames = orderLineDtosStream
                 .map(OrderLineDto::getProductName)
@@ -75,10 +69,14 @@ public class OrderService {
         }
         // If all products are in stock then place order and send kafka events
         if (allProductsInStock) {
+            // Map orderLineDtos to orderLines and add to the order model
+            List<OrderLine> orderLines = orderLineDtosStream
+                    .map(this:: mapFromDto)
+                    .toList();
+            order.setOrderLines(orderLines);
             orderRepository.save(order);
-            kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
-            // Also notify the Inventory Service that the quantities ordered
-            // should be subtracted from the quantitiesInStock
+            // Notify the Inventory Service of the quantities ordered
+            kafkaTemplate.send("inventoryUpdateTopic", new OrderPlacedEvent(orderRequest.getOrderLineDtos()));
         } else {
             throw new IllegalArgumentException("Product is not in stock");
         }
