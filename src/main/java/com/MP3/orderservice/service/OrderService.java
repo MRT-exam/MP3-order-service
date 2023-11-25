@@ -6,6 +6,7 @@ import com.MP3.orderservice.dto.OrderRequest;
 import com.MP3.orderservice.event.OrderPlacedEvent;
 import com.MP3.orderservice.model.Order;
 import com.MP3.orderservice.model.OrderLine;
+import com.MP3.orderservice.producer.OrderPlacedProducer;
 import com.MP3.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -25,25 +26,21 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final WebClient webClient;
-    private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
+    private final OrderPlacedProducer orderPlacedProducer;
     public void placeOrder(OrderRequest orderRequest) {
         // Create new Order model and generate an orderNumber
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
-
         // Get stream of orderLineDtos from OrderRequest
         Stream<OrderLineDto> orderLineDtosStream = orderRequest.getOrderLineDtos().stream();
-
         // Retrieve productNames
         List<String> productNames = orderLineDtosStream
                 .map(OrderLineDto::getProductName)
                 .toList();
-
         // Retrieve quantity in each orderLine
         List<Integer> orderLineQuantityList = orderLineDtosStream
                 .map(OrderLineDto::getQuantity)
                 .toList();
-
         // (Synchronous communication)
         // Get inventoryResponses for each orderLine
         InventoryResponse[] inventoryResponseArray = webClient.get()
@@ -52,12 +49,11 @@ public class OrderService {
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
                 .block();
-
         // Retrieve quantityInStock for each product
         List<Integer> inventoryQuantityInStockList = Arrays.stream(inventoryResponseArray)
                 .map(InventoryResponse::getQuantityInStock)
                 .toList();
-
+        // TODO: Refactor
         // Check if all products are in stock
         boolean allProductsInStock = true;
         for (int i=0; i < inventoryQuantityInStockList.size(); i++) {
@@ -76,7 +72,7 @@ public class OrderService {
             order.setOrderLines(orderLines);
             orderRepository.save(order);
             // Notify the Inventory Service of the quantities ordered
-            kafkaTemplate.send("inventoryUpdateTopic", new OrderPlacedEvent(orderRequest.getOrderLineDtos()));
+            orderPlacedProducer.produce(new OrderPlacedEvent(orderRequest.getOrderLineDtos()));
         } else {
             throw new IllegalArgumentException("Product is not in stock");
         }
