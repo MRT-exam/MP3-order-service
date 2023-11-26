@@ -1,6 +1,7 @@
 package com.MP3.orderservice.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +25,7 @@ public class KafkaProducerConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        props.put(JsonSerializer.TYPE_MAPPINGS,
+        props.put(JsonDeserializer.TYPE_MAPPINGS,
                 "com.MP3.orderService.event.OrderPlacedEvent:OrderPlacedEvent, com.MP3.orderService.dto.OrderLineDto:OrderLineDto");
         return props;
     }

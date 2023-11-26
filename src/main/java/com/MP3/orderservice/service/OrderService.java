@@ -9,6 +9,7 @@ import com.MP3.orderservice.model.OrderLine;
 import com.MP3.orderservice.producer.OrderPlacedProducer;
 import com.MP3.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -23,9 +24,11 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
-
+    @Autowired
     private final OrderRepository orderRepository;
+    @Autowired
     private final WebClient webClient;
+    @Autowired
     private final OrderPlacedProducer orderPlacedProducer;
     public void placeOrder(OrderRequest orderRequest) {
         // Create new Order model and generate an orderNumber
