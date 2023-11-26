@@ -27,12 +27,11 @@ public class KafkaProducerConfig {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         props.put(JsonSerializer.TYPE_MAPPINGS,
                 "orderPlacedEvent:com.MP3.orderService.event.OrderPlacedEvent, orderLineDto:com.MP3.orderService.dto.OrderLineDto");
-
         return props;
     }
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
-        return new DefaultKafkaProducerFactory<>(producerConfig());
+        return new DefaultKafkaProducerFactory<>(producerConfig(), new StringSerializer(), new JsonSerializer<>());
     }
 
     @Bean
