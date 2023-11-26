@@ -1,6 +1,5 @@
 package com.MP3.orderservice.config;
 
-import com.MP3.orderservice.event.OrderPlacedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -11,8 +10,6 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.apache.kafka.common.serialization.StringSerializer;
-
-
 import java.util.HashMap;
 import java.util.Map;
 
