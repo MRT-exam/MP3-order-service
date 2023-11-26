@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 public class OrderPlacedProducer {
 
     @Autowired
-    private KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
+    private KafkaTemplate kafkaTemplate;
 
     public void produce(OrderPlacedEvent event) {
         kafkaTemplate.send("inventoryUpdateTopic", event);
