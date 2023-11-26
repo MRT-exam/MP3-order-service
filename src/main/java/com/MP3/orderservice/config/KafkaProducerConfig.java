@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,31 +21,23 @@ public class KafkaProducerConfig {
     @Value(value = "${SPRING_KAFKA_BOOTSTRAP_SERVERS}")
     private String bootstrapAddress;
 
-    @Bean
-    public ProducerFactory<String, String> producerFactory() {
-        Map<String, Object> props = new HashMap<>();
+    public Map<String, Object> producerConfig() {
+        HashMap<String, Object> props = new HashMap();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        return new DefaultKafkaProducerFactory<>(props);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put(JsonDeserializer.TYPE_MAPPINGS,
+                "orderPlacedEvent:com.MP3.orderService.event.OrderPlacedEvent, orderLineDto:com.MP3.orderService.dto.OrderLineDto");
+
+        return props;
+    }
+    @Bean
+    public ProducerFactory<String, String> producerFactory() {
+        return new DefaultKafkaProducerFactory<>(producerConfig());
     }
 
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
-    }
-
-    @Bean
-    public ProducerFactory<String, OrderPlacedEvent> orderPlacedProducerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
-        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return new DefaultKafkaProducerFactory<>(configProps);
-    }
-
-    @Bean
-    public KafkaTemplate<String, OrderPlacedEvent> userKafkaTemplate() {
-        return new KafkaTemplate<>(orderPlacedProducerFactory());
     }
 }
