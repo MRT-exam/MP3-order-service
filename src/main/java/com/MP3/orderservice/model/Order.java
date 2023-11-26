@@ -9,8 +9,8 @@ import java.util.List;
 @Setter
 @Getter
 @Builder
+@Table(name = "orders")
 @Entity
-@Table(name = "order")
 public class Order {
 
     @Id

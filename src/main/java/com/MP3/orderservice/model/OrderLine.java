@@ -9,11 +9,11 @@ import java.math.BigDecimal;
 @Setter
 @Getter
 @Builder
-@Table(name = "order_line")
+@Table(name = "order_lines")
 @Entity
 public class OrderLine {
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String productName;
     private BigDecimal price;

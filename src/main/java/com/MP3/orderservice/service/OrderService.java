@@ -32,13 +32,15 @@ public class OrderService {
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
         // Get stream of orderLineDtos from OrderRequest
-        Stream<OrderLineDto> orderLineDtosStream = orderRequest.getOrderLineDtos().stream();
+
         // Retrieve productNames
-        List<String> productNames = orderLineDtosStream
+        List<String> productNames = orderRequest.getOrderLineDtos()
+                .stream()
                 .map(OrderLineDto::getProductName)
                 .toList();
         // Retrieve quantity in each orderLine
-        List<Integer> orderLineQuantityList = orderLineDtosStream
+        List<Integer> orderLineQuantityList = orderRequest.getOrderLineDtos()
+                .stream()
                 .map(OrderLineDto::getQuantity)
                 .toList();
         // (Synchronous communication)
@@ -66,7 +68,8 @@ public class OrderService {
         // If all products are in stock then place order and send kafka events
         if (allProductsInStock) {
             // Map orderLineDtos to orderLines and add to the order model
-            List<OrderLine> orderLines = orderLineDtosStream
+            List<OrderLine> orderLines = orderRequest.getOrderLineDtos()
+                    .stream()
                     .map(this:: mapFromDto)
                     .toList();
             order.setOrderLines(orderLines);
