@@ -26,6 +26,7 @@ public class KafkaProducerConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, OrderPlacedEvent.class.getName());
         props.put(JsonSerializer.TYPE_MAPPINGS,
                 "orderPlacedEvent:com.MP3.orderService.event.OrderPlacedEvent, orderLineDto:com.MP3.orderService.dto.OrderLineDto");
 
