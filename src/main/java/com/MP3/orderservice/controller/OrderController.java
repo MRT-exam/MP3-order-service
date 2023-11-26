@@ -3,6 +3,7 @@ package com.MP3.orderservice.controller;
 import com.MP3.orderservice.dto.OrderRequest;
 import com.MP3.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/order")
 public class OrderController {
 
+    @Autowired
     private final OrderService orderService;
 
     @PostMapping
