@@ -1,6 +1,7 @@
 package com.MP3.orderservice.config;
 
 import com.MP3.orderservice.event.OrderPlacedEvent;
+import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@RequiredArgsConstructor
 public class KafkaProducerConfig {
 
     @Value(value = "${SPRING_KAFKA_BOOTSTRAP_SERVERS}")
@@ -26,7 +28,6 @@ public class KafkaProducerConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, OrderPlacedEvent.class.getName());
         props.put(JsonSerializer.TYPE_MAPPINGS,
                 "orderPlacedEvent:com.MP3.orderService.event.OrderPlacedEvent, orderLineDto:com.MP3.orderService.dto.OrderLineDto");
 
