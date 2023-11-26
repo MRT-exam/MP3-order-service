@@ -47,7 +47,7 @@ public class OrderService {
         // Get inventoryResponses for each orderLine
         InventoryResponse[] inventoryResponseArray = webClient.get()
                 .uri("http://inventory-service:8082/api/inventory/",
-                        uriBuilder -> uriBuilder.queryParam("productNames", productNames).build())
+                        uriBuilder -> uriBuilder.queryParam("productName", productNames).build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
                 .block();
