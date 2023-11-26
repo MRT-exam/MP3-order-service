@@ -46,7 +46,7 @@ public class OrderService {
         // (Synchronous communication)
         // Get inventoryResponses for each orderLine
         InventoryResponse[] inventoryResponseArray = webClient.get()
-                .uri("http://inventory-service:8082/api/inventory/",
+                .uri("http://localhost:8082/api/inventory/",
                         uriBuilder -> uriBuilder.queryParam("productNames", productNames).build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
